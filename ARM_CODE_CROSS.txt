@@ -1,0 +1,188 @@
+// import the servo library:
+#include <Servo.h>
+#include <EEPROM.h>
+
+
+  
+// create an object for a servo:
+Servo S1;
+Servo S2;
+Servo S3;
+// define the analog input pin that the potentiometer is 
+// connected to, and the PWM output that the servo is 
+// connected to:
+int P1_pot = 0;
+int P2_pot = 1;
+int P3_pot = 2;
+int S1_BASE = 46;
+int S2_Elbow =11;
+int S3_Wrist = 8;
+int servo_1_PulseWidth;
+int servo_2_PulseWidth;
+int servo_3_PulseWidth;
+// declare variables, for use later:
+int P1_val;
+int P2_val;
+int P3_val;
+int S1_BASE_angle;
+int S2_Elbow_angle;
+int S3_Wrist_angle;
+
+int ref_1_PulseWidth=1481;
+int ref_2_PulseWidth=1283;
+int ref_3_PulseWidth=1396;
+
+float BASE[45]= {1524,1524,1524,1524,1524,1524,1524,1524,1524,1524,1524,1524,1524,1524,1524,1524,1524,1321,1330,1397,1430,1467,1502,1538,1571,1600,1645,1671,1712,1743,1776,1776,1481,1524,1524};
+float WRIST[45]={1896,1896,1896,1881,1910,1930,1955,1964,1981,2019,2045,2087,2116,2160,2189,2227,2255,2078,2089,2060,2026,2026,2026,2026,2026,2026,2028,2028,2026,2026,2028,2028,1821,1896,1896};
+float ELBOW[45]={2000,2000,2000,2000,2016,2003,1990,1972,1972,1954,1930,1898,1878,1857,1821,1800,1765,1986,1828,1843,1856,1889,1880,1907,1906,1931,1901,1915,1931,1940,1936,2100,2100,2100,2100,2100};
+
+
+float currentAngle=0;
+float currentAngle2=0;
+ float servo_3_RadAngle;
+  float servo_2_RadAngle;
+   float servo_1_RadAngle;
+
+// initialise the servo and the serial monitor:
+void setup() {
+ 
+
+  
+  Serial.begin(9600);
+
+
+  delay(1000);
+
+
+    S1.writeMicroseconds(1524);
+    S2.writeMicroseconds(2100);
+    S3.writeMicroseconds(1896);
+
+
+  S1.attach(S1_BASE);  
+  S2.attach(S2_Elbow);
+  S3.attach(S3_Wrist);
+  
+// SETTING up Wrist to point into sky
+// S3.writeMicroseconds(1000);
+
+// - 0.55 rad S2 limit angle
+
+  
+}
+ 
+void loop() {
+// INITAL POSITION
+ // S1.writeMicroseconds(1524);
+ // S2.writeMicroseconds(1896);
+  //S3.writeMicroseconds(2000);
+  delay(1000);
+
+
+
+int i=2;
+for (i=2;i<=34;i++)
+{
+   A_to_B( BASE[i-1], ELBOW[i-1], WRIST[i-1], BASE[i] , ELBOW[i], WRIST[i], 1000, 13);
+   Serial.println(i);
+}
+
+
+
+
+  delay(2000);
+  
+  while(1)  
+  {
+
+  }
+
+
+ 
+  delay(2000);
+
+  
+}
+
+
+/*void Point_to_digit(float base_rad, float elbow_rad, float wrist_rad){
+ // MOVING TO INITAL POSTITION
+ moveServo(S1, ref_1_PulseWidth, 0);
+ moveServo(S2, ref_2_PulseWidth, 0);
+ moveServo(S3, ref_3_PulseWidth, 0);
+}
+*/
+
+
+// FUNCTION TO MOVE FROM A TO B within 4s 
+void A_to_B( float S1_s, float S2_s, float S3_s, float S1_e , float S2_e , float S3_e, int delay_1, int steps)
+{
+float step_S1,step_S2,step_S3;
+int total_movement_time=delay_1;
+int step_number=steps;
+float each_step_delay=total_movement_time/(step_number+1); // it must be smaller to make sure we will do it within total delay time
+int x;
+// CALCULATING STEP SIZE
+step_S1=(S1_e-S1_s)/step_number;
+step_S2=(S2_e-S2_s)/step_number;
+step_S3=(S3_e-S3_s)/step_number;
+
+// TAKING TIMES
+unsigned long previousMillis = millis();
+unsigned long currentMillis = millis();
+unsigned long doing_task_milis;
+
+// CHECKING has 4 second passed
+x=0;
+while(currentMillis<=(previousMillis+total_movement_time))
+{
+  currentMillis = millis();
+  if(x!=step_number) // MAKING SURE WE DO NOT DO MORE STEPS
+  {
+  doing_task_milis=currentMillis ;
+     // CALCULATING NEW RAD ANGLE for each servo
+    S3_s=S3_s+step_S3;
+    S2_s=S2_s+step_S2;
+    S1_s=S1_s+step_S1;
+    // CHECKING LIMIT of S3
+    //S3_s=check_limit_S3(S3_s,S2_s);
+    if (S2_s<=-1.06)
+    {
+      S2_s=-1.06;
+    }
+   // PRINTING VALUES
+    S1.writeMicroseconds(S1_s);
+    S2.writeMicroseconds(S2_s);
+    S3.writeMicroseconds(S3_s);
+    
+    
+    
+    Serial.print("  STEP: BASE:  ");
+    Serial.print(S1_s);
+     Serial.print("  ELBOW:  ");
+    Serial.print(S2_s);
+     Serial.print("  WRIST:  ");
+    Serial.print(S3_s);
+    // MOVING SERVO
+    
+    while(doing_task_milis<=(currentMillis+each_step_delay)) // check has step_delay_times passed
+    {
+    doing_task_milis = millis();
+    //Serial.println("  I'm waiting  ");
+    }
+    x++;
+    Serial.print("  STEP NUMBER:  ");
+    Serial.println(x);
+  }
+  else
+  {
+ 
+  }
+  
+  
+  
+   
+    
+  }
+  
+}
